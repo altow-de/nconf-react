@@ -1,4 +1,13 @@
 import * as React from 'react'
+import { media, style } from 'typestyle'
+
+const inputStyle = style(
+  {
+    fontSize: '22px',
+    padding: '4px',
+  },
+  media({ maxWidth: '600px' }, { width: '90vw' })
+)
 
 export interface ITodoInput {
   add: (topic: string) => any
@@ -15,5 +24,5 @@ export default (props: ITodoInput) => {
   const onKeyPress = enterKeyHandler(props.add)
   const onChange = (e: ChangeEvent) => props.onChange(e.currentTarget.value)
   const inputProps = { onKeyPress, onChange, value: props.value, type: 'text' }
-  return <input {...inputProps} />
+  return <input className={inputStyle} {...inputProps} />
 }
