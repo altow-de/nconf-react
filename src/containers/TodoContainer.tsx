@@ -2,6 +2,8 @@ import * as React from 'react'
 import TodoInput from '../components/TodoInput'
 import TodoItem from '../components/TodoItem'
 
+import { Consumer, ITodoProviderState } from '../store/state'
+
 export interface ITodo {
   done: boolean
   topic: string
@@ -11,47 +13,27 @@ export interface ITodosState {
   draft: string
 }
 
-const todoMatch = (match: string) => (todo: ITodo) => todo.topic === match
-
 export default class Todos extends React.Component<any, ITodosState> {
   public state: ITodosState = {
     draft: 'enterme',
     todos: [],
   }
 
-  public updateInput(draft: string) {
-    this.setState({ draft })
-  }
-
-  public addTodo(topic: string) {
-    const isNotDuplicate = this.state.todos.findIndex(todoMatch(topic)) < 0
-    const todos = [{ done: false, topic }].concat(this.state.todos)
-    return isNotDuplicate ? this.setState({ todos, draft: '' }) : null
-  }
-
-  public toggleTodo(topic: string) {
-    const todoIndex = this.state.todos.findIndex(todoMatch(topic))
-    type updateTodoHandler = ((prevState: Readonly<ITodosState>) => ITodosState)
-    const updateTodo: updateTodoHandler = state => {
-      state.todos[todoIndex].done = !state.todos[todoIndex].done
-      return state
-    }
-    this.setState(updateTodo)
-  }
-
   public render() {
-    const inputProps = {
-      add: (value: string) => this.addTodo(value),
-      onChange: (value: string) => this.updateInput(value),
-      value: this.state.draft,
+    const connect = ({ value }: ITodoProviderState) => {
+      const add = (topic: string) => value.addTodo(topic)
+      const onChange = (fieldValue: string) => value.updateInput(fieldValue)
+      const input = <TodoInput {...{ add, onChange, value: value.draft }} />
+      const items = <ul>{value.todos.map(this.renderTodo.bind(this))}</ul>
+      return React.createElement(React.Fragment, {}, input, items)
     }
-    const input = <TodoInput {...inputProps} />
-    const items = <ul>{this.state.todos.map(this.renderTodo.bind(this))}</ul>
-    return React.createElement(React.Fragment, {}, input, items)
+    return React.createElement(Consumer, { children: connect })
   }
   public renderTodo({ topic, done }: ITodo) {
-    const toggle = () => this.toggleTodo(topic)
-    const props = { key: topic, topic, done, toggle }
-    return <TodoItem {...props} />
+    const connect = ({ value }: ITodoProviderState) => {
+      const toggle = () => value.toggleTodo(topic)
+      return <TodoItem {...{ topic, done, toggle }} />
+    }
+    return React.createElement(Consumer, { key: topic, children: connect })
   }
 }
